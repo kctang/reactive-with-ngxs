@@ -1,0 +1,725 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>Reactive Programming with Observables & NGXS</title>
+
+  <link rel="stylesheet" href="css/reveal.css">
+  <!--<link rel="stylesheet" href="css/theme/black.css">-->
+  <link rel="stylesheet" href="css/theme/sky.css">
+
+  <!-- Theme used for syntax highlighting of code -->
+  <link rel="stylesheet" href="lib/css/zenburn.css">
+
+  <!-- Printing and PDF exports -->
+  <script>
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+    document.getElementsByTagName('head')[0].appendChild(link);
+  </script>
+</head>
+<body>
+
+<div class="reveal">
+  <div class="slides">
+    <section>
+      <h2>Reactive Programming</h2>
+      <h3>with Observables, RxJS & NGXS</h3>
+      <br/><br/><br/><br/>
+      <small>&#91;&#32;&#69;&#109;&#97;&#105;&#108;&#58;&#32;&#107;&#99;&#116;&#97;&#110;&#103;&#64;&#98;&#105;&#103;&#50;&#46;&#110;&#101;&#116;&#32;&#124;&#32;&#84;&#119;&#105;&#116;&#116;&#101;&#114;&#58;&#32;&#64;&#107;&#99;&#116;&#97;&#110;&#103;&#32;&#93;
+      </small>
+    </section>
+    <section>
+      <section>
+        <h3>Observables & RxJS</h3>
+        <ul>
+          <li>Prerequisite to use NGXS effectively</li>
+          <li>JavaScript's asynchronous programming concept, like:
+            <ul>
+              <li>Callback functions, setTimeout(), setInterval().</li>
+              <li>Promises.</li>
+              <li>async/await.</li>
+            </ul>
+          </li>
+          <li>Also lets you do...</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Reactive Programming</h3>
+        <ul>
+          <li>Stream of values emitted over time</li>
+          <li>Values piped through
+            <a href="https://github.com/ReactiveX/rxjs/blob/master/doc/operators.md">operators</a>
+            for downstream manipulation.
+            <ul>
+              <li>Like piping in shell</li>
+            </ul>
+          </li>
+          <li>Applications react to emitted values by subscribing to observables.</li>
+          <li>Collection where values arrive over time instead of when you call next().</li>
+        </ul>
+      </section>
+    </section>
+    <section>
+      <section>
+        <h4>Demo 1: Simple asynchronous operations</h4>
+        <p>Can be done with both promises and observable.</p>
+        <ul>
+          <li>Print "running" on screen</li>
+          <li>Wait 2 seconds</li>
+          <li>Print "done" on screen</li>
+          <li>Wait 2 seconds</li>
+          <li>Change the message to uppercase</li>
+        </ul>
+      </section>
+      <section>
+        <h4>Demo 1 - Promise</h4>
+        <pre class="stretch"><code data-trim data-noescape>
+        // 1. update UI when promise runs
+        // 2. after 2 seconds, update the resolved value to UI
+        // 3. start a new promise that will change value to upper
+        //    case after 2 seconds.
+        // 4. update UI with the new value
+        new Promise&lt;string&gt;(resolve => {
+          this.promiseValue = 'Promise is running...'
+          setTimeout(() => resolve('Promise is done.'), 2000)
+        }).then(val => {
+          this.promiseValue = val
+          new Promise&lt;string&gt;(resolve => {
+            setTimeout(() => resolve(val.toUpperCase()), 2000)
+          }).then(value => {
+            this.promiseValue = value
+          })
+        })
+      </code></pre>
+      </section>
+      <section>
+        <h4>Demo 1 - Observable</h4>
+        <pre class="stretch"><code data-trim data-noescape>
+    // 1. Move a value (the initial message) through the observable chain.
+    of('Observable is running').pipe(
+      // 2. First tap() operator updates UI with value it receives.
+      tap(value => this.observableValue = value),
+      // 3. Wait for 2 seconds with delay().
+      delay(2000),
+      // 4. Perform some async task (resolve a promise value in this case).
+      concatMap(value => {
+        console.log(`concatMap() received a value [${value}]`)
+        return Promise.resolve('Observable is done.')
+      }),
+      // 5. Update the value to UI.
+      tap(value => this.observableValue = value),
+      // 6. Wait another 2 seconds.
+      delay(2000)
+      // 7. Item 1-6 will not execute if subscribe() is not called.
+      // 8. When we subscribe, we supply function that will be called when
+      //    next value arrives. In this case, the value resolved by promise.
+      // 9: The next() function update UI again.
+    ).subscribe(val => {
+      this.observableValue = val.toUpperCase()
+    })
+      </code></pre>
+      </section>
+      <section>
+        <h4>Demo 2 - Count Followers of Followers (1/2)</h4>
+        <small>What about, not so simple asynchronous operations?</small>
+        <ul>
+          <li>For a given Github user, get list of followers</li>
+          <pre style="font-size: 12px">Request URL: https://api.github.com/users/xxx/followers
+[ {
+    "login": "yyy",
+    "id": 188880,
+    "avatar_url": "https://avatars2.githubu...",
+    "url": "https://api.github.com/users/yyy",
+    ... } ]</pre>
+          <li>For each follower (login), get follower count (concurrently)</li>
+          <pre style="font-size: 12px">Request URL: https://api.github.com/users/yyy
+{
+  "login": "yyy",
+  "id": 409825, ...
+  "followers": 5,
+  "following": 4,
+  ... }</pre>
+          <li>Count sum of "followers of followers" & emit this value</li>
+        </ul>
+      </section>
+      <section>
+        <h4>Demo 2 - Count Followers of Followers (2/2)</h4>
+        <pre class="stretch" style="font-size: 18px"><code data-trim data-noescape
+                                                           class="javascript">
+    // parameters
+    const username = 'bob'
+    const maxFollowers = 3
+    this.updateMessage('Fetching follower list')
+    // Get a list of followers based on github username via promise based HTTP call
+    from(fetch(`https://api.github.com/users/${username}/followers`)).pipe(
+      // resolve fetch response as json() object (this is a promise!)
+      concatMap(response => response.json()),
+      // emit a value for each follower in the json response (one to many)
+      concatMap(json => of(...json).pipe(take(maxFollowers))),
+
+      // Now, for each follower, get his/her follower count via another HTTP call
+      // Concurrently, up to 3 HTTP requests at a time...
+      mergeMap(
+        user => fetch(`https://api.github.com/users/${user.login}`),
+        3
+      ),
+
+      // for each response, convert to JSON (promise function)
+      concatMap(response => response.json()),
+      tap(user => console.log(`User [${user.login}] has ${user.followers} follower(s)`)),
+
+      // extract the follower count for each follower.
+      map(({ followers }) => followers),
+
+      // toArray() collects all emitted values until the upstream observable has no more value.
+      // it then emits all the collected values as a SINGLE array value (many to one)
+      toArray(),
+
+      // map() operator performs an array reduce() to add up all values in the array
+      // and emit the total follower count
+      map(followers => followers.reduce((p, c) => p + c, 0))
+
+      // subscribe() for the next value. When next() value comes, it will contain the
+      // "total follower count"
+    ).subscribe(
+      followerCount => {
+        this.updateMessage(`Followers of ${username} has ${followerCount} followers`)
+      },
+      // if something goes wrong...
+      e => console.error(e)
+    )
+        </code></pre>
+      </section>
+    </section>
+    <section>
+      <section>
+        <h3>State Management in Angular</h3>
+        <p>3 common ways...</p>
+      </section>
+      <section>
+        <h3>Components with Services</h3>
+        <ul>
+          <li>Services injected into components</li>
+          <li>State is managed by components and/or services</li>
+          <li>Pro: Easy to get started & flexible</li>
+          <li>Con:
+            <ul>
+              <li>Complex components (need to handle UI, business logic and state management)</li>
+              <li>Duplication of state may lead to stale state</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h3>Presentational & Smart Components(1/2)</h3>
+        <ul>
+          <li>Conceptual separation of component types <i>without state</i> from those that <i>needs
+            to manage
+            state</i>.
+          </li>
+          <li>In React speak:
+            <ul>
+              <li>"Presentation component" ~ stateless functional component</li>
+              <li>"Smart component" ~ container component (that you "connect" to a service)
+              </li>
+            </ul>
+        </ul>
+      </section>
+      <section>
+        <h4>... (2/2)</h4>
+        <ul>
+          </li>
+          <li>Presentation components use @Input/@Output to pass data around and should not access
+            services
+          </li>
+          <li>Application state managed as properties within smart components and/or services
+          </li>
+          <li>Pro:
+            <ul>
+              <li>Clear separation of component roles</li>
+              <li>Encourage reuse of presentational component</li>
+              <li>Services only exposed to smart components</li>
+            </ul>
+          </li>
+          <li>Con:
+            <ul>
+              <li>Components dependent on services</li>
+              <li>Reactivity not baked in</li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h3>CQRS Pattern</h3>
+        <ul>
+          <li>Command Query Responsibility Segregation (CQRS)</li>
+          <li>Pattern popularised by Redux/Flux in the React community</li>
+          <li>In Angular, de facto CQRS library is NGRX</li>
+          <li><b>NGXS</b> a relatively new library for Angular that manages global state using the
+            CQRS pattern
+          </li>
+        </ul>
+      </section>
+    </section>
+    <section>
+      <section>
+        <h3>NGXS</h3>
+        <ul>
+          <li>Redux was designed for React; and NGRX is like a port of Redux to Angular</li>
+          <li>NGXS took concepts of Redux but reimagined them for Angular
+            [<a
+              href="https://medium.com/@amcdnl/why-another-state-management-framework-for-angular-b4b4c19ef664">source</a>]
+          </li>
+          <li>NGXS Concepts...</li>
+        </ul>
+      </section>
+      <section data-background-size="contain" data-background="./images/ngxs-concepts.png">
+      </section>
+      <section data-background-size="contain" data-background="./images/ngxs-concepts.png"
+               data-background-opacity="0.3">
+        <ol>
+          <li>Components select slices of data to display</li>
+          <li>Components dispatch actions with payloads</li>
+          <li>Actions do the work & mutate (update) the application state in the store</li>
+          <li>Whenever application state is updated, the store will inform interested parties
+            (subscriptions)
+          </li>
+        </ol>
+        <ul>
+          <li>Actions can be an async task (e.g. REST API call)</li>
+          <li>Actions should never update UI</li>
+        </ul>
+      </section>
+    </section>
+    <section>
+      <section>
+        <h3>Demo 3 - Library Application</h3>
+        <p>Run demo, then review source codes...</p>
+      </section>
+      <section>
+        <p>Define <b>model</b> for the state container</p>
+        <pre class="stretch"><code data-trim data-noescape>// Library.state.model
+export interface Book {
+  id: string
+  title: string
+  pages: number
+  borrower?: string
+}
+
+export interface LibraryStateModel {
+  currentUser: string
+  books: {
+    [ id: string ]: Book
+  }
+  checkedOutBooks: {
+    [ username: string ]: string[]
+  }
+}</code></pre>
+      </section>
+      <section>
+        <p>Define <b>actions</b> that can be dispatched</p>
+        <pre class="stretch"><code data-trim data-noescape class="javascript">// Library.state.actions
+// Note: Classes in namespace optional
+export namespace LibraryStateActions {
+  export class Login {
+    static readonly type = 'Library.Login'
+
+    constructor (public payload: { username: string }) {
+    }
+  }
+
+  export class Logout {
+    static readonly type = 'Library.Logout'
+  }
+
+  export class AddBook {
+    static readonly type = 'Library.AddBook'
+  }
+
+  export class RemoveBooks {
+    static readonly type = 'Library.RemoveBooks'
+
+    constructor (public payload: { bookIds: string[] }) {
+    }
+  }
+
+  export class BorrowBooks {
+    static readonly type = 'Library.BorrowBooks'
+
+    constructor (public payload: { bookIds: string[] }) {
+    }
+  }
+
+  export class ReturnBooks {
+    static readonly type = 'Library.ReturnBooks'
+
+    constructor (public payload: { bookIds: string[] }) {
+    }
+  }
+
+  export class BusinessError {
+    static readonly type = 'Library.BusinessError'
+
+    constructor (public payload: { message: string }) {
+    }
+  }
+}
+      </code></pre>
+      </section>
+      <section>
+        <p>UI component use <code>async pipe</code> to display data</p>
+        <pre class="stretch"><code data-trim data-noescape class="html">
+&#x3C;!-- demo3.componnet.html --&#x3E;
+Hi, &#x3C;span class=&#x22;mat-body-strong&#x22;&#x3E;{{username$ | async}}&#x3C;/span&#x3E;!
+You have &#x3C;span class=&#x22;mat-body-strong&#x22;&#x3E;{{myBookCount$ | async}}&#x3C;/span&#x3E; books.
+Library has &#x3C;span class=&#x22;mat-body-strong&#x22;&#x3E;{{libraryPageCount$ | async}}&#x3C;/span&#x3E; pages of stuff
+to read.
+
+&#x3C;!-- multiple values (like a collection) --&#x3E;
+&#x3C;mat-selection-list&#x3E;
+  &#x3C;mat-list-option *ngFor=&#x22;let book of myBooks$ | async&#x22; [value]=&#x22;book.id&#x22;&#x3E;
+    {{book.title}}
+  &#x3C;/mat-list-option&#x3E;
+&#x3C;/mat-selection-list&#x3E;
+
+&#x3C;mat-selection-list&#x3E;
+  &#x3C;mat-list-option
+    *ngFor=&#x22;let book of libraryBooks$ | async&#x22; [value]=&#x22;book.id&#x22;
+    [disabled]=&#x22;book.borrower&#x22;
+    [selected]=&#x22;book.borrower&#x22;
+    {{book.title}} ({{book.pages}} pages)
+    &#x3C;ng-container *ngIf=&#x22;book.borrower&#x22;&#x3E;({{book.borrower}})&#x3C;/ng-container&#x3E;
+  &#x3C;/mat-list-option&#x3E;
+&#x3C;/mat-selection-list&#x3E;
+      </code></pre>
+      </section>
+      <section>
+        <p>Component Select Data & Dispatch Actions</p>
+        <pre class="stretch"><code data-trim data-noescape class="javascript">
+// demo3.component.ts
+/**
+ * - @Select() - gGet a slice of data from store
+ * - ofActionDispatched() - reacts to actions being dispatched
+ * - store.select() - also used to get a slice of data from store
+ * - store.snapshot() - non-reactive way to get a slice of data
+ * - this.store.dispatch(new LibraryStateActions.Login({ username })) - dispatch action
+ * - Use BehaviorSubject if you need to visualize UI with mock data
+ * - Avoid/Minimize referencing service providers directly
+ */
+export class Demo3Component implements OnInit {
+  @ViewChild(&#x27;libraryBooks&#x27;)
+  libraryBooks: MatSelectionList
+
+  @ViewChild(&#x27;myBooks&#x27;)
+  myBooks: MatSelectionList
+
+  @Select(LibraryState.username)
+  username$: Observable&#x3C;string&#x3E;
+
+  @Select(LibraryState.myBookCount)
+  myBookCount$: Observable&#x3C;number&#x3E;
+
+  @Select(LibraryState.libraryPageCount)
+  libraryPageCount$: Observable&#x3C;number&#x3E;
+
+  @Select(LibraryState.myBooks)
+  myBooks$: Observable&#x3C;Book[]&#x3E;
+
+  @Select(LibraryState.libraryBooks)
+  libraryBooks$: Observable&#x3C;Book[]&#x3E;
+
+  constructor (private store: Store, private actions$: Actions,
+               private snackBar: MatSnackBar) {
+  }
+
+  ngOnInit (): void {
+    // note: don&#x27;t forget to unsubscribe when destroying component
+    this.actions$.pipe(
+      ofActionDispatched(LibraryStateActions.BusinessError),
+      tap&#x3C;LibraryStateActions.BusinessError&#x3E;(action =&#x3E; {
+        this.snackBar.open(action.payload.message, undefined, {
+          duration: 1000
+        })
+      })
+    ).subscribe()
+
+/*
+    this.store.select(state =&#x3E; {
+      const library = state.library as LibraryStateModel
+      return library.currentUser
+    }).subscribe(
+      value =&#x3E; console.log(value)
+    )
+
+    const librarySnapshot = this.store.snapshot().library as LibraryStateModel
+    console.log(librarySnapshot.currentUser)
+*/
+  }
+
+  doLogin (username: string) {
+    this.store.dispatch(new LibraryStateActions.Login({ username }))
+  }
+
+  doLogout () {
+    this.store.dispatch(new LibraryStateActions.Logout())
+  }
+
+  doAddBook () {
+    this.store.dispatch(new LibraryStateActions.AddBook())
+  }
+
+  doReturnBooks () {
+    this.store.dispatch(new LibraryStateActions.ReturnBooks({
+      bookIds: this.myBooks.selectedOptions.selected
+        .map(option =&#x3E; option.value)
+    }))
+  }
+
+  doRemoveBooks () {
+    this.store.dispatch(new LibraryStateActions.RemoveBooks({
+      bookIds: this.selectedBookIds()
+    }))
+  }
+
+  doBorrowBooks () {
+    this.store.dispatch(new LibraryStateActions.BorrowBooks({
+      bookIds: this.selectedBookIds()
+    }))
+  }
+
+  private selectedBookIds () {
+    return this.libraryBooks.selectedOptions.selected
+      .filter(option =&#x3E; !option.disabled)
+      .map(option =&#x3E; option.value)
+  }
+}
+</code></pre>
+      </section>
+      <section>
+        <p>State Container Class</p>
+        <pre class="stretch"><code data-trim data-noescape class="javascript">
+// Library.state.ts
+/**
+ * - State container defines name of the state and default values based on the container's model.
+ * - `@Selector()`  returns the data in the shape defined by the function.
+ *   - These can be any form of derived data.
+ *   - Functions must be without side effects.
+ * - Can inject dependencies in `@State` class.
+ * - To run some code whenever an action is dispatched, create `@Action()` functions.
+ *   - Can be simple reducers.
+ *   - Can return promise or observable.
+ */
+import { Action, Selector, State, StateContext } from &#x27;@ngxs/store&#x27;
+import { tap } from &#x27;rxjs/operators&#x27;
+import { HttpClient } from &#x27;@angular/common/http&#x27;
+import { Book, LibraryStateModel } from &#x27;./Library.state.model&#x27;
+import { LibraryStateActions } from &#x27;./Library.state.actions&#x27;
+
+@State&#x3C;LibraryStateModel&#x3E;({
+  name: &#x27;library&#x27;,
+  defaults: {
+    currentUser: &#x27;guest&#x27;,
+    books: {},
+    checkedOutBooks: {}
+  }
+})
+export class LibraryState {
+  @Selector()
+  static username (state: LibraryStateModel) {
+    return state.currentUser
+  }
+
+  @Selector()
+  static libraryBooks (state: LibraryStateModel) {
+    return Object.values(state.books).sort()
+  }
+
+  @Selector()
+  static myBookCount (state: LibraryStateModel) {
+    const myBooks = state.checkedOutBooks[ state.currentUser ] || []
+    return myBooks.length
+  }
+
+  @Selector()
+  static libraryPageCount (state: LibraryStateModel) {
+    return Object.keys(state.books)
+      .map(bookId =&#x3E; state.books[ bookId ])
+      .reduce((p, c) =&#x3E; p + c.pages, 0)
+  }
+
+  @Selector()
+  static myBooks (state: LibraryStateModel) {
+    const bookIds = state.checkedOutBooks[ state.currentUser ] || []
+
+    return Object.keys(state.books)
+      .filter(bookId =&#x3E; bookIds.indexOf(bookId) !== -1)
+      .map(bookId =&#x3E; state.books[ bookId ])
+      .sort()
+  }
+
+  constructor (private http: HttpClient) {
+  }
+
+  @Action(LibraryStateActions.Login)
+  login (context: StateContext&#x3C;LibraryStateModel&#x3E;, { payload }: LibraryStateActions.Login) {
+    // reducer
+    context.patchState({
+      currentUser: payload.username
+    })
+  }
+
+  @Action(LibraryStateActions.Logout)
+  logout (context: StateContext&#x3C;LibraryStateModel&#x3E;) {
+    // reducer
+    context.patchState({
+      currentUser: &#x27;guest&#x27;
+    })
+  }
+
+  @Action(LibraryStateActions.AddBook)
+  addBook (context: StateContext&#x3C;LibraryStateModel&#x3E;) {
+    // this is where redux solutions use middleware: effects, thunk, saga
+    // in ngxs, return an observable
+    return this.http.jsonp(&#x27;http://uinames.com/api/?callback=callback&#x27;, &#x27;callback&#x27;).pipe(
+      tap(({ name }: any) =&#x3E; {
+        const newBook: Book = {
+          id: &#x60;${Date.now()}&#x60;, // simple ID generator
+          pages: (Date.now() % 200) + 1, // between 1 to 200
+          title: name
+        }
+        context.patchState({
+          books: {
+            ...context.getState().books,
+            [ newBook.id ]: newBook
+          }
+        })
+      })
+    )
+  }
+
+  @Action(LibraryStateActions.RemoveBooks)
+  removeBooks (context: StateContext&#x3C;LibraryStateModel&#x3E;, { payload }: LibraryStateActions.RemoveBooks) {
+    const books = context.getState().books
+    payload.bookIds.map(bookId =&#x3E; {
+      delete books[ bookId ]
+    })
+
+    context.patchState({ books })
+  }
+
+  @Action(LibraryStateActions.BorrowBooks)
+  borrowBooks (context: StateContext&#x3C;LibraryStateModel&#x3E;, { payload }: LibraryStateActions.BorrowBooks) {
+    const { currentUser, books, checkedOutBooks } = context.getState()
+
+    if (currentUser === &#x27;guest&#x27;) {
+      return context.dispatch(new LibraryStateActions.BusinessError({ message: &#x27;Guest not allowed to borrow books.&#x27; }))
+    }
+
+    // update borrower
+    payload.bookIds.map(bookId =&#x3E; {
+      books[ bookId ].borrower = currentUser
+    })
+
+    // update user&#x27;s borrowed book
+    const userCheckedOutBooks = new Set(checkedOutBooks[ currentUser ] || [])
+    payload.bookIds.map(bookId =&#x3E; userCheckedOutBooks.add(bookId))
+
+    context.patchState({
+      books,
+      checkedOutBooks: {
+        ...checkedOutBooks,
+        [ currentUser ]: Array.from(userCheckedOutBooks)
+      }
+    })
+  }
+
+  @Action(LibraryStateActions.ReturnBooks)
+  returnBooks (context: StateContext&#x3C;LibraryStateModel&#x3E;, { payload }: LibraryStateActions.ReturnBooks) {
+    const { currentUser, books, checkedOutBooks } = context.getState()
+
+    // update borrower
+    payload.bookIds.map(bookId =&#x3E; {
+      books[ bookId ].borrower = undefined
+    })
+
+    // update user&#x27;s borrowed book
+    const userCheckedOutBooks = new Set(context.getState().checkedOutBooks[ currentUser ])
+    payload.bookIds.map(bookId =&#x3E; userCheckedOutBooks.delete(bookId))
+
+    context.patchState({
+      books,
+      checkedOutBooks: {
+        ...checkedOutBooks,
+        [ currentUser ]: Array.from(userCheckedOutBooks)
+      }
+    })
+  }
+}
+
+      </code></pre>
+      </section>
+      <section>
+        <p>Register NGXS & State Container(s)</p>
+        <pre class="stretch"><code data-trim data-noescape class="javascript">
+// app.module.ts
+@NgModule({
+  declarations: [
+    ...
+  ],
+  imports: [
+    ...
+    NgxsModule.forRoot([ LibraryState ])
+  ],
+  bootstrap: [ AppComponent ]
+})
+export class AppModule {
+}
+      </code></pre>
+      </section>
+    </section>
+    <section>
+      <h3>NGXS Plugins</h3>
+      <ul>
+        <li>Storage - Instant persistent storage!</li>
+        <li>Redux devtools</li>
+        <li>and more!</li>
+      </ul>
+    </section>
+    <section>
+      <h3>Summary</h3>
+      <ul>
+        <li>Observables makes complex reactive operations manageable</li>
+        <li>NGXS as state management solution for Angular application - fits like a glove!</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+  // More info about config & dependencies:
+  // - https://github.com/hakimel/reveal.js#configuration
+  // - https://github.com/hakimel/reveal.js#dependencies
+  Reveal.initialize({
+    dependencies: [
+      { src: 'plugin/markdown/marked.js' },
+      { src: 'plugin/markdown/markdown.js' },
+      { src: 'plugin/notes/notes.js', async: true },
+      {
+        src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+          hljs.initHighlightingOnLoad();
+        }
+      }
+    ]
+  });
+</script>
+</body>
+</html>

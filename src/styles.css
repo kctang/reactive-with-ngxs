@@ -1,0 +1,38 @@
+/* You can add global styles to this file, and also import other style files */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+}
+
+section {
+  padding: 16px;
+}
+
+[padding-small] {
+  padding: 8px;
+}
+
+[padding] {
+  padding: 16px;
+}
+
+[margin-small-right] {
+  margin-right: 8px !important;
+}
+
+[flex] {
+  display: flex;
+}
+
+[grow] {
+  flex-grow: 1;
+}
+
+[shrink] {
+  flex-shrink: 1;
+}
