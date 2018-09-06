@@ -1,5 +1,5 @@
 {
-  "name": "ngxs-demo",
+  "name": "reactive-with-ngxs",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
