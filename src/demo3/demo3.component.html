@@ -1,52 +1,72 @@
-<mat-card>
-  <mat-card-title>Library Component</mat-card-title>
-  <mat-card-content>
-    Hi, <span class="mat-body-strong">{{username$ | async}}</span>!
-  </mat-card-content>
-  <mat-card-actions>
-    <button mat-raised-button (click)="doLogin('bob')">Log In as Bob</button>
-    <button mat-raised-button (click)="doLogin('cat')">Log In as Cat</button>
-    <button mat-raised-button (click)="doLogout()">Log Out</button>
-  </mat-card-actions>
-  <mat-card-content>
-    <div flex>
-      <div grow class=mat-title>My Books</div>
-      <button mat-raised-button color="primary" (click)="doReturnBooks()">Return Books</button>
-    </div>
-    <div class="mat-caption">
-      You have <span class="mat-body-strong">{{myBookCount$ | async}}</span> books.
-    </div>
-    <mat-selection-list #myBooks>
-      <mat-list-option *ngFor="let book of myBooks$ | async" [value]="book.id" [@flyInOut]>
-        {{book.title}}
-      </mat-list-option>
-    </mat-selection-list>
-
-    <div flex>
-      <div grow class="mat-title">Library Books</div>
+<section>
+  <mat-card padding>
+    <mat-card-content>
+      Hi, <span class="mat-body-strong">{{username$ | async}}</span>!
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button (click)="doLogin('bob')">Log In as Bob</button>
+      <button mat-raised-button (click)="doLogin('cat')">Log In as Cat</button>
+      <button mat-raised-button (click)="doLogout()">Log Out</button>
+    </mat-card-actions>
+    <mat-card-content>
       <div flex>
-        <button mat-icon-button (click)="doAddBook()">
-          <mat-icon>add</mat-icon>
-        </button>
-        <button mat-icon-button (click)="doRemoveBooks()">
-          <mat-icon>delete</mat-icon>
-        </button>
-        <button mat-raised-button color="primary" (click)="doBorrowBooks()">Borrow Books</button>
+        <div grow class=mat-title>My Books</div>
+        <button mat-raised-button color="primary" (click)="doReturnBooks()">Return Books</button>
       </div>
-    </div>
-    <div class="mat-caption">
-      Library has <span class="mat-body-strong">{{libraryPageCount$ | async}}</span> pages of stuff
-      to read.
-    </div>
-    <mat-selection-list #libraryBooks>
-      <mat-list-option
-        *ngFor="let book of libraryBooks$ | async" [value]="book.id"
-        [disabled]="book.borrower"
-        [selected]="book.borrower"
-        [@slideUpDown]>
-        {{book.title}} ({{book.pages}} pages)
-        <ng-container *ngIf="book.borrower">({{book.borrower}})</ng-container>
-      </mat-list-option>
-    </mat-selection-list>
-  </mat-card-content>
-</mat-card>
+      <div class="mat-caption">
+        You have <span class="mat-body-strong">{{myBookCount$ | async}}</span> books.
+      </div>
+      <mat-selection-list #myBooks>
+        <mat-list-option *ngFor="let book of myBooks$ | async" [value]="book.id" [@flyInOut]>
+          {{book.title}}
+        </mat-list-option>
+      </mat-selection-list>
+
+      <div flex>
+        <div grow class="mat-title">Library Books</div>
+        <div flex>
+          <button
+            matTooltip="Add book with title randomly retrieved from https://uinames.com/"
+            mat-icon-button (click)="doAddBook()">
+            <mat-icon>add</mat-icon>
+          </button>
+          <button
+            matTooltip="Delete book"
+            mat-icon-button (click)="doRemoveBooks()">
+            <mat-icon>delete</mat-icon>
+          </button>
+          <button mat-raised-button color="primary" (click)="doBorrowBooks()">Borrow Books</button>
+        </div>
+      </div>
+      <div class="mat-caption">
+        Library has <span class="mat-body-strong">{{libraryPageCount$ | async}}</span> pages of
+        stuff
+        to read.
+      </div>
+      <mat-selection-list #libraryBooks>
+        <mat-list-option
+          *ngFor="let book of libraryBooks$ | async" [value]="book.id"
+          [disabled]="book.borrower"
+          [selected]="book.borrower"
+          [@slideUpDown]>
+          {{book.title}} ({{book.pages}} pages)
+          <ng-container *ngIf="book.borrower">({{book.borrower}})</ng-container>
+        </mat-list-option>
+      </mat-selection-list>
+    </mat-card-content>
+  </mat-card>
+  <section>
+    Try these:
+    <ul>
+      <li>Add some books</li>
+      <li>Delete some books</li>
+      <li>Borrow books as guest (will not be allowed)</li>
+      <li>Login as bob</li>
+      <li>Select and borrow some books</li>
+      <li>Login as cat</li>
+      <li>Select and borrow some books</li>
+      <li>Switch between users</li>
+      <li>Logout</li>
+    </ul>
+  </section>
+</section>

@@ -69,7 +69,7 @@ export class LibraryState {
   addBook (context: StateContext<LibraryStateModel>) {
     // this is where redux solutions use middleware: effects, thunk, saga
     // in ngxs, return an observable
-    return this.http.get('//uinames.com/api/?callback=callback').pipe(
+    return this.http.jsonp('//uinames.com/api/?callback=callback', 'callback').pipe(
       tap(({ name }: any) => {
         const newBook: Book = {
           id: `${Date.now()}`, // simple ID generator

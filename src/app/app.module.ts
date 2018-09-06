@@ -3,7 +3,15 @@ import { NgModule } from '@angular/core'
 
 import { AppComponent } from './app.component'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
-import { MatButtonModule, MatCardModule, MatDividerModule, MatIconModule, MatListModule, MatSnackBarModule } from '@angular/material'
+import {
+  MatButtonModule,
+  MatCardModule,
+  MatDividerModule,
+  MatIconModule,
+  MatListModule,
+  MatSnackBarModule,
+  MatTabsModule, MatTooltipModule
+} from '@angular/material'
 import { NgxsModule } from '@ngxs/store'
 import { HttpClientJsonpModule, HttpClientModule } from '@angular/common/http'
 import { NgxsReduxDevtoolsPluginModule } from '@ngxs/devtools-plugin'
@@ -31,7 +39,10 @@ import { Demo3Component } from '../demo3/demo3.component'
     MatIconModule,
     MatListModule,
     MatSnackBarModule,
+    MatTabsModule,
+    MatTooltipModule,
     NgxsModule.forRoot([ LibraryState ]),
+    // --- uncomment to see these plugins in action!
     // NgxsReduxDevtoolsPluginModule.forRoot(),
     // NgxsStoragePluginModule.forRoot()
   ],
