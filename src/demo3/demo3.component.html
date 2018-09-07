@@ -1,17 +1,27 @@
-<section>
-  <mat-card padding>
+<div>
+  <mat-card>
+    <mat-card-title>Library Component</mat-card-title>
     <mat-card-content>
       Hi, <span class="mat-body-strong">{{username$ | async}}</span>!
     </mat-card-content>
     <mat-card-actions>
-      <button mat-raised-button (click)="doLogin('bob')">Log In as Bob</button>
-      <button mat-raised-button (click)="doLogin('cat')">Log In as Cat</button>
-      <button mat-raised-button (click)="doLogout()">Log Out</button>
+      <div>
+        <button mat-raised-button color="primary" (click)="doLogin('bob')">Bob</button>
+        <button mat-raised-button color="primary" (click)="doLogin('cat')">Cat</button>
+        <button mat-raised-button color="primary" (click)="doLogout()">Guest</button>
+      </div>
     </mat-card-actions>
     <mat-card-content>
       <div flex>
         <div grow class=mat-title>My Books</div>
-        <button mat-raised-button color="primary" (click)="doReturnBooks()">Return Books</button>
+        <div>
+          <button
+            matTooltip="Return selected book(s)"
+            color="primary"
+            mat-icon-button (click)="doReturnBooks()">
+            <mat-icon>arrow_downward</mat-icon>
+          </button>
+        </div>
       </div>
       <div class="mat-caption">
         You have <span class="mat-body-strong">{{myBookCount$ | async}}</span> books.
@@ -24,18 +34,25 @@
 
       <div flex>
         <div grow class="mat-title">Library Books</div>
-        <div flex>
+        <div>
           <button
             matTooltip="Add book with title randomly retrieved from https://uinames.com/"
+            color="accent"
             mat-icon-button (click)="doAddBook()">
             <mat-icon>add</mat-icon>
           </button>
           <button
             matTooltip="Delete book"
+            color="primary"
             mat-icon-button (click)="doRemoveBooks()">
             <mat-icon>delete</mat-icon>
           </button>
-          <button mat-raised-button color="primary" (click)="doBorrowBooks()">Borrow Books</button>
+          <button
+            matTooltip="Borrow select book(s)"
+            color="primary"
+            mat-icon-button (click)="doBorrowBooks()">
+            <mat-icon>arrow_upward</mat-icon>
+          </button>
         </div>
       </div>
       <div class="mat-caption">
@@ -69,4 +86,4 @@
       <li>Logout</li>
     </ul>
   </section>
-</section>
+</div>
