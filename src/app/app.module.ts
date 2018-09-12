@@ -43,8 +43,8 @@ import { Demo3Component } from '../demo3/demo3.component'
     MatTooltipModule,
     NgxsModule.forRoot([ LibraryState ]),
     // --- uncomment to see these plugins in action!
-    // NgxsReduxDevtoolsPluginModule.forRoot(),
-    // NgxsStoragePluginModule.forRoot()
+    // NgxsStoragePluginModule.forRoot(),
+    // NgxsReduxDevtoolsPluginModule.forRoot()
   ],
   providers: [],
   bootstrap: [ AppComponent ]
