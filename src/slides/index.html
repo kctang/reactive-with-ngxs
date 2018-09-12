@@ -30,11 +30,12 @@
     <section>
       <h2>Reactive Programming</h2>
       <h3>with Observables, RxJS & NGXS</h3>
-      <br/><br/><br/><br/>
+      <br /><br /><br /><br />
       <small>&#32;&#69;&#109;&#97;&#105;&#108;&#58;&#32;&#107;&#99;&#116;&#97;&#110;&#103;&#64;&#98;&#105;&#103;&#50;&#46;&#110;&#101;&#116;&#32;&#124;&#32;&#84;&#119;&#105;&#116;&#116;&#101;&#114;&#58;&#32;&#64;&#107;&#99;&#116;&#97;&#110;&#103;&#32;
       </small>
-      <br/>
-      <small><a href="https://github.com/kctang/reactive-with-ngxs">github.com/kctang/reactive-with-ngxs</a></small>
+      <br />
+      <small><a href="https://github.com/kctang/reactive-with-ngxs">github.com/kctang/reactive-with-ngxs</a>
+      </small>
     </section>
     <section>
       <section>
@@ -132,21 +133,21 @@
         <small>What about, not so simple asynchronous operations?</small>
         <ul>
           <li>For a given Github user, get list of followers</li>
-          <pre style="font-size: 12px">Request URL: https://api.github.com/users/xxx/followers
+          <pre style="font-size: 12px"><code data-trim data-noescape>Request URL: https://api.github.com/users/xxx/followers
 [ {
     "login": "yyy",
     "id": 188880,
     "avatar_url": "https://avatars2.githubu...",
-    "url": "https://api.github.com/users/yyy",
-    ... } ]</pre>
+    "url": "https://api.github.com/users/yyy", ...
+} ]</code></pre>
           <li>For each follower (login), get follower count (concurrently)</li>
-          <pre style="font-size: 12px">Request URL: https://api.github.com/users/yyy
+          <pre style="font-size: 12px"><code data-trim data-noescape>Request URL: https://api.github.com/users/yyy
 {
   "login": "yyy",
   "id": 409825, ...
   "followers": 5,
-  "following": 4,
-  ... }</pre>
+  "following": 4, ...
+}</code></pre>
           <li>Count sum of "followers of followers" & emit this value</li>
         </ul>
       </section>
@@ -202,7 +203,12 @@
     <section>
       <section>
         <h3>State Management in Angular</h3>
-        <p>3 common ways...</p>
+        <p><i>3 common ways...</i></p>
+        <ul>
+          <li>Components with Services</li>
+          <li>Presentational & Smart Components</li>
+          <li>CQRS Pattern</li>
+        </ul>
       </section>
       <section>
         <h3>Components with Services</h3>
@@ -303,6 +309,38 @@
       <section>
         <h3>Demo 3 - Library Application</h3>
         <p>Run demo, then review source codes...</p>
+        <ul>
+          <li>
+            <code style="font-size: 50%">Library.state.model.ts</code>
+            <ul>
+              <li style="font-size: 75%">How to model the app?</li>
+            </ul>
+          </li>
+          <li>
+            <code style="font-size: 50%">Library.state.actions.ts</code>
+            <ul>
+              <li style="font-size: 75%">What actions can be triggered by the app?</li>
+            </ul>
+          </li>
+          <li>
+            <code style="font-size: 50%">demo3.component.html</code>
+            <ul>
+              <li style="font-size: 75%">How to layout UI with data?</li>
+            </ul>
+          </li>
+          <li>
+            <code style="font-size: 50%">demo3.component.ts</code>
+            <ul>
+              <li style="font-size: 75%">How to get data from store & how to dispatch actions?</li>
+            </ul>
+          </li>
+          <li>
+            <code style="font-size: 50%">Library.state.ts</code>
+            <ul>
+              <li style="font-size: 75%">What am I supposed to do when processing actions?</li>
+            </ul>
+          </li>
+        </ul>
       </section>
       <section>
         <p>Define <b>model</b> for the state container</p>
@@ -406,7 +444,7 @@ to read.
         <pre class="stretch"><code data-trim data-noescape class="javascript">
 // demo3.component.ts
 /**
- * - @Select() - gGet a slice of data from store
+ * - @Select() - get a slice of data from store
  * - ofActionDispatched() - reacts to actions being dispatched
  * - store.select() - also used to get a slice of data from store
  * - store.snapshot() - non-reactive way to get a slice of data
